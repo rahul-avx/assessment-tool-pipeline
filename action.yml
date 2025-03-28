@@ -46,12 +46,12 @@ runs:
 
     - name: Load Docker Image
       run: |
-        docker load -i ./assessment-tool-repo/PQC_CICD/cicd_docker.tar.xz
+        sudo docker load -i ./assessment-tool-repo/PQC_CICD/cicd_docker.tar.xz
       shell: bash
 
     - name: Run PQC_Assessment in Docker
       run: |
-        docker run -it --rm \
+        sudo docker run -it --rm \
           -v ./target-repo:/target-repo \
           -v ./output-folder:/output-folder \
           -v ./assessment-tool-repo/PQC_CICD/config.ini:/config.ini \
