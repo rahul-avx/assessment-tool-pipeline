@@ -51,7 +51,7 @@ runs:
 
     - name: Run PQC_Assessment in Docker
       run: |
-        docker run -it --rm \
+        docker run --rm \
           -v ./target-repo:/target-repo \
           -v ./output-folder:/output-folder \
           -v ./assessment-tool-repo/PQC_CICD/config.ini:/config.ini \
