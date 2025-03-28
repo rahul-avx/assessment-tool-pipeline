@@ -1,0 +1,70 @@
+name: PQC_Assessment Runner Action
+description: Runs the PQC_Assessment executable on a target repository
+inputs:
+  target-repo-url:
+    description: The URL of the Git repository to analyze
+    required: true
+outputs:
+  result:
+    description: Output of the PQC_Assessment executable
+runs:
+  using: "composite"
+  steps:
+    - name: Checkout Target Repository
+      uses: actions/checkout@v3
+      with:
+        repository: ${{ inputs.target-repo-url }}
+        path: target-repo
+
+    - name: Checkout Test_Tool Repository
+      uses: actions/checkout@v3
+      with:
+        repository: rahul-avx/assessment-tool-pipeline
+        path: assessment-tool-repo
+
+    - name: Validate Input Folder
+      run: |
+        echo "Checking if input folder exists..."
+        if [ -d "./target-repo" ]; then
+          echo "Input folder exists. Listing contents:"
+          ls -la ./target-repo
+        else
+          echo "Input folder does not exist!"
+          exit 1
+        fi
+      shell: bash
+
+    # Step 3: Prepare Output Folder
+    - name: Prepare Output Folder
+      run: |
+        echo "Ensuring output folder exists..."
+        mkdir -p ./output-folder
+        chmod 755 ./output-folder
+        echo "Output folder ready. Listing contents (if any):"
+        ls -la ./output-folder || echo "Output folder is empty."
+      shell: bash
+
+    - name: Load Docker Image
+      run: |
+        docker load -i ./assessment-tool-repo/PQC_CICD/cicd_docker.tar.xz
+      shell: bash
+
+    - name: Run PQC_Assessment in Docker
+      run: |
+        docker run -it --rm \
+          -v ./target-repo:/target-repo \
+          -v ./output-folder:/output-folder \
+          -v ./assessment-tool-repo/PQC_CICD/config.ini:/config.ini \
+          cicd_docker --configPath /config.ini --inputFolder /target-repo --outputFolder /output-folder
+      shell: bash
+
+    - name: Upload CBOM output as Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: CBOM-output
+        path: ./output-folder
+
+    - name: Upload SARIF Results
+      uses: github/codeql-action/upload-sarif@v3
+      with:
+        sarif_file: ./output-folder/results.sarif
